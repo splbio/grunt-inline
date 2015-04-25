@@ -40,8 +40,7 @@ module.exports = function(grunt) {
 				var fileContent = grunt.file.read(filepath);
 				var destFilepath = '';
 
-				grunt.log.write('Processing ' + filepath + '...')
-
+				grunt.log.writeln('Processing ' + filepath + '...');
 				if(fileType==='html' || (exts && exts.indexOf(fileType) > -1)){
 					fileContent = html(filepath, fileContent, relativeTo, options);
 				}else if(fileType==='css'){
@@ -172,6 +171,7 @@ module.exports = function(grunt) {
 				var inlineFilePath = path.resolve( path.dirname(filepath), src ).replace(/\?.*$/, '');	// 将参数去掉	
 
 				if( grunt.file.exists(inlineFilePath) ){
+					grunt.log.debug('inlineFilePath: ' + inlineFilePath + '\n');
 					ret = matchedWord.replace(src, (new datauri(inlineFilePath)).content);
 				}else{
 					grunt.log.error("Couldn't find " + inlineFilePath + '!');
@@ -193,23 +193,31 @@ module.exports = function(grunt) {
 		fileContent = fileContent.replace(/url\(["']*([^)'"]+)["']*\)/g, function(matchedWord, imgUrl){
 			var newUrl = imgUrl;
 			var flag = imgUrl.indexOf(options.tag)!=-1;	// urls like "img/bg.png?__inline" will be transformed to base64
-			if(isBase64Path(imgUrl) || isRemotePath(imgUrl)){
+			if(isBase64Path(imgUrl)) {
+				grunt.log.debug('css(): not escaping: isBase64Path:' + imgUrl + '\n');
 				return matchedWord;
 			}
-			grunt.log.debug( 'imgUrl: '+imgUrl);
-			grunt.log.debug( 'filepath: '+filepath);
+			if (isRemotePath(imgUrl)){
+				grunt.log.debug('css(): not escaping: isRemotePath:' + imgUrl + '\n');
+				return matchedWord;
+			}
+			grunt.log.debug( 'css(): imgUrl: '+imgUrl +'\n');
+			grunt.log.debug( 'css(): filepath: '+filepath +'\n');
 			var absoluteImgurl = path.resolve( path.dirname(filepath),imgUrl );
-			grunt.log.debug( 'absoluteImgurl: '+absoluteImgurl);
+			grunt.log.debug( 'css(): absoluteImgurl: '+absoluteImgurl +'\n');
 			newUrl = path.relative( path.dirname(filepath), absoluteImgurl );
-			grunt.log.debug( 'newUrl: '+newUrl);
+			grunt.log.debug( 'css(): newUrl: '+newUrl +'\n');
 
 			absoluteImgurl = absoluteImgurl.replace(/\?.*$/, '');
 			if(flag && grunt.file.exists(absoluteImgurl)){
 				newUrl = datauri(absoluteImgurl);
+				grunt.log.debug( 'css(): flag&&grunt.file.exists(absoluteImgurl) newUrl: '+newUrl + '\n');
 			}else{
 				newUrl = newUrl.replace(/\\/g, '/');
+				grunt.log.debug( 'css(): ! flag&&grunt.file.exists(absoluteImgurl) newUrl: '+newUrl + '\n');
 			}
 
+			grunt.log.debug( 'css(): newUrl: '+newUrl + '\n');
 			return matchedWord.replace(imgUrl, newUrl);
 		});
 		fileContent = options.cssmin ? CleanCSS.process(fileContent) : fileContent;
@@ -230,18 +238,20 @@ module.exports = function(grunt) {
 			if(isBase64Path(imgUrl) || isRemotePath(imgUrl)){
 				return matchedWord;
 			}
-			grunt.log.debug( 'imgUrl: '+imgUrl);
-			grunt.log.debug( 'filepath: '+filepath);
+			grunt.log.debug( 'cssInlineToHtml(): imgUrl: '+imgUrl +'\n');
+			grunt.log.debug( 'cssInlineToHtml(): filepath: '+filepath +'\n');
 			var absoluteImgurl = path.resolve( path.dirname(filepath),imgUrl );	// img url relative to project root
-			grunt.log.debug( 'absoluteImgurl: '+absoluteImgurl);
+			grunt.log.debug( 'cssInlineToHtml(): absoluteImgurl: '+absoluteImgurl +'\n');
 			newUrl = path.relative( path.dirname(htmlFilepath), absoluteImgurl );	// img url relative to the html file
 			grunt.log.debug([htmlFilepath, filepath, absoluteImgurl, imgUrl]);
-			grunt.log.debug( 'newUrl: '+newUrl);
+			grunt.log.debug( 'cssInlineToHtml(): newUrl: '+newUrl +'\n');
 
 			absoluteImgurl = absoluteImgurl.replace(/\?.*$/, '');
 			if(flag && grunt.file.exists(absoluteImgurl)){
+				grunt.log.debug( 'cssInlineToHtml(): flag&&grunt.file.exists(absoluteImgurl) newUrl: '+newUrl + '\n');
 				newUrl = datauri(absoluteImgurl);
 			}else{
+				grunt.log.debug( 'cssInlineToHtml(): ! flag&&grunt.file.exists(absoluteImgurl) newUrl: '+newUrl + '\n');
 				newUrl = newUrl.replace(/\\/g, '/');
 			}
 
