@@ -7,6 +7,12 @@
 
 'use strict';
 
+function logit(msg) {
+    var call = util.stack()[1],
+	file = call.getFileName(),
+	lineno = call.getLineNumber();
+}
+
 module.exports = function(grunt) {
 
 	var path = require('path');
